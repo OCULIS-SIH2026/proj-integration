@@ -1,0 +1,20 @@
+# RetinaAI Tele-Ophthalmology Clinical Screening Platform
+# Robots Exclusion File for Web Crawlers & Medical Search Indexers
+
+User-agent: *
+Allow: /
+Allow: /#dashboard
+Allow: /#screening
+Allow: /#quality
+Allow: /#results
+Allow: /#review
+Allow: /#report
+Allow: /#simulation
+Allow: /#apidocs
+Allow: /sitemap.xml
+
+# Disallow direct indexing of raw internal API payloads to protect clinical data
+Disallow: /api/screenings/
+Disallow: /api/report/
+
+Sitemap: https://retinaai.health/sitemap.xml

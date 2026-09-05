@@ -1,0 +1,9 @@
+# Optional PyTorch and Computer Vision dependencies for Person 1 and Person 2
+# Note: The platform runs out-of-the-box in zero-dependency mode using Python standard library.
+# Installing these enables GPU/CPU PyTorch inference with best_model.pth and OpenCV filters.
+
+torch>=2.0.0
+torchvision>=0.15.0
+pillow>=9.0.0
+numpy>=1.20.0
+opencv-python>=4.5.0

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "sample_level0_normal",
+    "filename": "sample_normal_level0.bmp",
+    "dr_level": 0,
+    "label": "No Diabetic Retinopathy",
+    "referable": false,
+    "quality": "good",
+    "description": "Clear fundus with healthy macula, distinct optic disc margins, and no microvascular lesions."
+  },
+  {
+    "id": "sample_level1_mild",
+    "filename": "sample_mild_level1.bmp",
+    "dr_level": 1,
+    "label": "Mild Non-Proliferative DR",
+    "referable": false,
+    "quality": "good",
+    "description": "Microaneurysms only. Early disease; recommended for 6-12 month routine monitoring."
+  },
+  {
+    "id": "sample_level2_moderate",
+    "filename": "sample_moderate_level2.bmp",
+    "dr_level": 2,
+    "label": "Moderate Non-Proliferative DR",
+    "referable": true,
+    "quality": "good",
+    "description": "More than microaneurysms: blot hemorrhages & hard lipid exudates. Warrants referral to ophthalmologist."
+  },
+  {
+    "id": "sample_level3_severe",
+    "filename": "sample_severe_level3.bmp",
+    "dr_level": 3,
+    "label": "Severe Non-Proliferative DR",
+    "referable": true,
+    "quality": "good",
+    "description": "4-2-1 criteria signs: extensive 4-quadrant hemorrhages, cotton wool spots, and venous beading."
+  },
+  {
+    "id": "sample_level4_pdr",
+    "filename": "sample_pdr_level4.bmp",
+    "dr_level": 4,
+    "label": "Proliferative Diabetic Retinopathy",
+    "referable": true,
+    "quality": "good",
+    "description": "Severe vision risk: neovascularization at disc (NVD) with vitreous hemorrhage threat. Urgent referral required."
+  },
+  {
+    "id": "sample_poor_quality_blur",
+    "filename": "sample_poor_quality_blur.bmp",
+    "dr_level": null,
+    "label": "Unusable / Blur Artifact",
+    "referable": false,
+    "quality": "poor",
+    "description": "Severe motion artifact & low focus score (variance < 30). Triggers automated recapture feedback."
+  }
+]
