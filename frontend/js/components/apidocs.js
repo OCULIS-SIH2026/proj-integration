@@ -34,7 +34,7 @@ const ApiDocsComponent = {
         <!-- Diagnostic Engine Specification Banner -->
         <div style="margin-top: 18px; padding: 10px 14px; background: var(--surface-raised); border-radius: 8px; border: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); flex-wrap: wrap;">
           <span class="chip chip-primary" style="font-size: 11px; padding: 2px 8px; font-weight: 700;">SPEC</span>
-          <span style="font-weight: 600; color: var(--text-primary); font-family: var(--font-code); font-size: 12.5px;">RetinaAI Diagnostic Engine v2.4 • EfficientNet-B0 (DR 0–4) • Grad-CAM XAI • CDSCO Compliant</span>
+          <span style="font-weight: 600; color: var(--text-primary); font-family: var(--font-code); font-size: 12.5px;">OculisAI Diagnostic Engine v2.4 • EfficientNet-B0 (DR 0–4) • Grad-CAM XAI • CDSCO Compliant</span>
         </div>
 
         <div style="display: flex; gap: 24px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-subtle); flex-wrap: wrap;">

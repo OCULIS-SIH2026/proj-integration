@@ -154,7 +154,7 @@ class RetinaAPIHandler(http.server.SimpleHTTPRequestHandler):
         if path == '/api/health':
             self._send_json({
                 "status": "healthy",
-                "service": "RetinaAI Tele-Ophthalmology Engine",
+                "service": "OculisAI Tele-Ophthalmology Engine",
                 "version": "2.4.0",
                 "cdsco_compliant": True,
                 "timestamp": datetime.now().isoformat()

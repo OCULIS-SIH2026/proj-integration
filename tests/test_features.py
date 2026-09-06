@@ -102,7 +102,7 @@ class TestRetinaAIFeatures(unittest.TestCase):
         """Feature 1: Precision Clinical frontend UI is served at GET /."""
         status, body, ctype = simulate_request("GET", "/")
         self.assertEqual(status, 200)
-        self.assertIn(b"RetinaAI", body)
+        self.assertIn(b"OculisAI", body)
         self.assertIn("text/html", ctype)
 
     def test_feature_02_health_endpoint(self):
@@ -242,7 +242,7 @@ class TestRetinaAIFeatures(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn("text/html", ctype)
         self.assertIn(b"<!DOCTYPE html>", body)
-        self.assertIn(b"RetinaAI Screening Report", body)
+        self.assertIn(b"OculisAI Screening Report", body)
         self.assertIn(screening_id.encode('utf-8'), body)
 
     def test_feature_10_doctor_review_workflow(self):

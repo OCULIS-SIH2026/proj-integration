@@ -24,19 +24,19 @@ def run_self_test():
     Validates that all Person 1, Person 2, and Person 3 components are wired correctly.
     """
     print("==================================================")
-    print("      RetinaAI System Diagnostic Self-Test        ")
+    print("      OculisAI System Diagnostic Self-Test        ")
     print("==================================================")
     init_db()
-    print("✓ [Database] SQLite store initialized successfully.")
+    print("âœ“ [Database] SQLite store initialized successfully.")
 
     # Auto-seed initial demo cohort if fresh clone or empty database
     initial_stats = get_dashboard_stats()
     if initial_stats.get('total_screenings', 0) == 0:
-        print("ℹ [Database] Empty database detected on fresh launch. Auto-seeding demo cohort...")
+        print("â„¹ [Database] Empty database detected on fresh launch. Auto-seeding demo cohort...")
         try:
             from backend.seed_data import seed
             seed()
-            print("✓ [Database] Auto-seeded demo cases successfully.")
+            print("âœ“ [Database] Auto-seeded demo cases successfully.")
         except Exception as e:
             print(f"! [Database] Auto-seeding notice: {e}")
 
@@ -70,12 +70,12 @@ def run_self_test():
         ex_cnt = lesions.get('exudates', {}).get('count', 0)
         nv_stat = "Detected" if lesions.get('neovascularization', {}).get('detected') else "None"
 
-        print(f"✓ [Quality] Status: {str(q_status).upper()} (Score: {q_score})")
-        print(f"✓ [Person 1 AI] Predicted: Level {p_level} ({p_label}), Conf: {p_conf}")
-        print(f"✓ [Person 2 XAI] Grad-CAM Heatmap generated ({len(gradcam_uri)} chars)")
-        print(f"✓ [Person 2 Lesions] Candidates: MA={ma_cnt}, HE={ha_cnt}, EX={ex_cnt}, NV={nv_stat}")
-        print(f"✓ [Triage Contract] Referable: {is_ref}, Recommendation: {t_rec}")
-        print(f"✓ [Processing] Pipeline completed in {proc_ms} ms")
+        print(f"âœ“ [Quality] Status: {str(q_status).upper()} (Score: {q_score})")
+        print(f"âœ“ [Person 1 AI] Predicted: Level {p_level} ({p_label}), Conf: {p_conf}")
+        print(f"âœ“ [Person 2 XAI] Grad-CAM Heatmap generated ({len(gradcam_uri)} chars)")
+        print(f"âœ“ [Person 2 Lesions] Candidates: MA={ma_cnt}, HE={ha_cnt}, EX={ex_cnt}, NV={nv_stat}")
+        print(f"âœ“ [Triage Contract] Referable: {is_ref}, Recommendation: {t_rec}")
+        print(f"âœ“ [Processing] Pipeline completed in {proc_ms} ms")
 
     else:
         print("! [Sample Notice] Sample images not yet generated at", sample_img_path)
@@ -83,13 +83,13 @@ def run_self_test():
     # Validate MATLAB pipeline & Simulink co-location
     matlab_dir = os.path.join(WORKSPACE_DIR, 'matlab_pipeline')
     if os.path.exists(matlab_dir) and os.path.exists(os.path.join(matlab_dir, 'setup_environment.m')):
-        print("✓ [Person 2 MATLAB] 10-Phase screening engine & Simulink scripts verified.")
+        print("âœ“ [Person 2 MATLAB] 10-Phase screening engine & Simulink scripts verified.")
 
     sim = run_simulation('scenario_a')
-    print(f"✓ [Simulink Telemedicine] Simulated Scenario A: Throughput = {sim['results']['total_throughput_annual']} pts/yr, Doctor Util = {sim['results']['doctor_utilization_pct']}%, Status: {sim['results']['bottleneck_stage']}")
+    print(f"âœ“ [Simulink Telemedicine] Simulated Scenario A: Throughput = {sim['results']['total_throughput_annual']} pts/yr, Doctor Util = {sim['results']['doctor_utilization_pct']}%, Status: {sim['results']['bottleneck_stage']}")
 
     stats = get_dashboard_stats()
-    print(f"✓ [Dashboard KPIs] Total cases in database: {stats['total_screenings']}, Referable: {stats['referable_cases']}")
+    print(f"âœ“ [Dashboard KPIs] Total cases in database: {stats['total_screenings']}, Referable: {stats['referable_cases']}")
     print("==================================================")
     print("         All Diagnostic Tests PASSED!             ")
     print("==================================================")
@@ -108,7 +108,7 @@ def main():
     run_self_test()
 
     print(f"\n==================================================")
-    print(f"  RetinaAI Web Platform Online")
+    print(f"  OculisAI Web Platform Online")
     print(f"  Dashboard UI:           http://localhost:{port}")
     print(f"  Telemedicine Studio:    http://localhost:{port}/#simulation")
     print(f"  Screening REST API:     POST http://localhost:{port}/api/screen")
@@ -128,3 +128,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

@@ -31,10 +31,16 @@ def assess_quality(image_input, hint=None):
     Returns:
         dict: quality results matching mock_response.json
     """
+    filename = (hint or "").lower()
+    if isinstance(image_input, str):
+        filename += " " + os.path.basename(image_input).lower()
+    is_blur_hint = any(k in filename for k in ("blur", "poor", "bad", "recapture", "unusable"))
+
     # Check if PIL and numpy or OpenCV are available
     try:
         from PIL import Image
         import numpy as np
+
 
         if isinstance(image_input, str):
             img = Image.open(image_input).convert('L')
@@ -135,13 +141,13 @@ def assess_quality(image_input, hint=None):
 
     passes = sum([focus_pass, illum_pass, contrast_pass, fov_pass])
 
-    if is_blur_hint or passes < 2 or focus_val < 26.0:
+    if is_blur_hint or passes < 2:
         quality = "poor"
         score = 0.35
         recapture_needed = True
         enhancement_recommended = False
         reasons = []
-        if not focus_pass or focus_val < 26.0:
+        if not focus_pass:
             reasons.append("Severe blur/motion artifact detected. Stabilize camera and refocus.")
         if not illum_pass:
             reasons.append("Extreme underexposure or glare. Adjust camera flash setting.")
@@ -158,7 +164,7 @@ def assess_quality(image_input, hint=None):
         quality = "borderline"
         score = 0.65
         recapture_needed = False
-        recapture_reason = "Suboptimal illumination or contrast. Image enhancement (CLAHE) recommended."
+        recapture_reason = ""
         enhancement_recommended = True
 
     return {

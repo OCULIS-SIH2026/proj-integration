@@ -386,7 +386,7 @@ class TestReportGenerator(unittest.TestCase):
 
         html = generate_report_html(screening)
         self.assertIn("<!DOCTYPE html>", html)
-        self.assertIn("RetinaAI Screening Report", html)
+        self.assertIn("OculisAI Screening Report", html)
         self.assertIn("PT-REPORT-001", html)
         self.assertIn("Ramesh Kumar", html)
         self.assertIn("Moderate NPDR", html)

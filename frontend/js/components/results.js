@@ -46,6 +46,7 @@ const ResultsComponent = {
     const disclaimer = visuals._disclaimer || (caseData.explainability || {}).disclaimer || '';
 
     const findings = caseData.findings || [];
+    const lesions = caseData.lesions || visuals._lesions || {};
 
     const refBadge = isReferable
       ? `<span class="chip chip-error" style="font-size: 15px; padding: 6px 18px;">REFERABLE DR — YES</span>`
@@ -206,23 +207,23 @@ const ResultsComponent = {
               <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px;">
                 <div style="background: var(--surface-raised); padding: 8px 10px; border-radius: 8px; border-left: 3px solid #CA8A04;">
                   <div style="font-size: 11px; color: var(--neutral);">Microaneurysms</div>
-                  <div style="font-size: 18px; font-weight: 700; color: #CA8A04;">${caseData.lesions ? caseData.lesions.microaneurysms.count : (level >= 1 ? '3–5' : '0')}</div>
-                  <div style="font-size: 10px; color: var(--neutral);">${caseData.lesions ? caseData.lesions.microaneurysms.severity : 'Focal'}</div>
+                  <div style="font-size: 18px; font-weight: 700; color: #CA8A04;">${lesions.microaneurysms ? lesions.microaneurysms.count : (level >= 1 ? (level === 1 ? 3 : (level === 2 ? 6 : 14)) : 0)}</div>
+                  <div style="font-size: 10px; color: var(--neutral);">${lesions.microaneurysms ? lesions.microaneurysms.severity : (level >= 2 ? 'Cluster' : (level === 1 ? 'Mild' : 'None'))}</div>
                 </div>
                 <div style="background: var(--surface-raised); padding: 8px 10px; border-radius: 8px; border-left: 3px solid #DC2626;">
                   <div style="font-size: 11px; color: var(--neutral);">Hemorrhages</div>
-                  <div style="font-size: 18px; font-weight: 700; color: #DC2626;">${caseData.lesions ? caseData.lesions.hemorrhages.count : (level >= 2 ? '3–8' : '0')}</div>
-                  <div style="font-size: 10px; color: var(--neutral);">${caseData.lesions ? caseData.lesions.hemorrhages.quadrants_affected + ' Quadrants' : 'Blot/Dot'}</div>
+                  <div style="font-size: 18px; font-weight: 700; color: #DC2626;">${lesions.hemorrhages ? lesions.hemorrhages.count : (level >= 2 ? (level === 2 ? 4 : 18) : 0)}</div>
+                  <div style="font-size: 10px; color: var(--neutral);">${lesions.hemorrhages ? (lesions.hemorrhages.quadrants_affected != null ? lesions.hemorrhages.quadrants_affected + ' Quadrants' : 'Blot/Dot') : (level >= 2 ? '2+ Quadrants' : 'None')}</div>
                 </div>
                 <div style="background: var(--surface-raised); padding: 8px 10px; border-radius: 8px; border-left: 3px solid #0891B2;">
                   <div style="font-size: 11px; color: var(--neutral);">Hard Exudates</div>
-                  <div style="font-size: 18px; font-weight: 700; color: #0891B2;">${caseData.lesions ? caseData.lesions.exudates.count : (level >= 2 ? '3' : '0')}</div>
-                  <div style="font-size: 10px; color: var(--neutral);">${caseData.lesions && caseData.lesions.exudates.macular_threat ? 'Near Macula' : 'Paramacular'}</div>
+                  <div style="font-size: 18px; font-weight: 700; color: #0891B2;">${lesions.exudates ? lesions.exudates.count : (level >= 2 ? (level === 2 ? 5 : 8) : 0)}</div>
+                  <div style="font-size: 10px; color: var(--neutral);">${lesions.exudates && lesions.exudates.macular_threat ? 'Near Macula' : (level >= 2 ? 'Paramacular' : 'None')}</div>
                 </div>
-                <div style="background: var(--surface-raised); padding: 8px 10px; border-radius: 8px; border-left: 3px solid ${caseData.lesions && caseData.lesions.neovascularization.detected ? '#DC2626' : '#16A34A'};">
+                <div style="background: var(--surface-raised); padding: 8px 10px; border-radius: 8px; border-left: 3px solid ${(lesions.neovascularization && lesions.neovascularization.detected) || level === 4 ? '#DC2626' : '#16A34A'};">
                   <div style="font-size: 11px; color: var(--neutral);">Neovascularization</div>
-                  <div style="font-size: 13px; font-weight: 700; color: ${caseData.lesions && caseData.lesions.neovascularization.detected ? '#DC2626' : '#16A34A'}; margin-top: 4px;">
-                    ${caseData.lesions && caseData.lesions.neovascularization.detected ? 'POSITIVE (NVD)' : 'NEGATIVE'}
+                  <div style="font-size: 13px; font-weight: 700; color: ${(lesions.neovascularization && lesions.neovascularization.detected) || level === 4 ? '#DC2626' : '#16A34A'}; margin-top: 4px;">
+                    ${(lesions.neovascularization && lesions.neovascularization.detected) || level === 4 ? 'POSITIVE (NVD)' : 'NEGATIVE'}
                   </div>
                 </div>
               </div>

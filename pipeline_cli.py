@@ -172,7 +172,7 @@ if __name__ == "__main__":
         sample_img_path = os.path.join("sample_data", "images", "sample_moderate_level2.bmp")
 
     print(f"\n==================================================")
-    print(f"  RetinaAI End-to-End Pipeline CLI Runner")
+    print(f"  OculisAI End-to-End Pipeline CLI Runner")
     print(f"  Target Image: {sample_img_path}")
     print(f"==================================================")
 

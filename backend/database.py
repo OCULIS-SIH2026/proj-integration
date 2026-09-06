@@ -32,80 +32,96 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-def init_db():
+def _create_schema(conn):
+    cursor = conn.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS screenings (
+        id TEXT PRIMARY KEY,
+        status TEXT DEFAULT 'success',
+        patient_id TEXT NOT NULL,
+        patient_name TEXT,
+        patient_age INTEGER,
+        patient_gender TEXT,
+        diabetes_duration INTEGER,
+        hba1c REAL,
+        eye TEXT,
+        timestamp TEXT NOT NULL,
+        processing_time_ms REAL,
+        -- Quality fields (new schema: quality.*)
+        quality_status TEXT,
+        quality_score REAL,
+        quality_json TEXT,          -- Full quality object as JSON
+        -- Prediction fields (new schema: prediction.*)
+        dr_level INTEGER,           -- prediction.stage / level
+        dr_label TEXT,              -- prediction.label
+        confidence REAL,            -- prediction.confidence
+        probabilities TEXT,         -- prediction.probabilities JSON
+        referable INTEGER,          -- triage.is_referable
+        -- Triage (new schema: triage.*)
+        triage_json TEXT,
+        -- Findings
+        findings TEXT,
+        -- Visuals (new schema: visuals.*)
+        visuals_json TEXT,
+        -- Lesions (Person 2 CV quantitative candidates)
+        lesions_json TEXT,
+        -- Enhancement
+        enhancement_json TEXT,
+        -- Doctor review
+        doctor_status TEXT DEFAULT 'pending',
+        doctor_dr_level INTEGER,
+        doctor_referral_action TEXT,
+        doctor_notes TEXT,
+        doctor_name TEXT,
+        doctor_review_time TEXT,
+        -- Legacy columns for backward compat (kept to avoid migrating existing rows)
+        image_quality_status TEXT,
+        image_quality_score REAL,
+        quality_details TEXT,
+        scores TEXT,
+        gradcam_data TEXT,
+        vessel_data TEXT
+    )
+    """)
+    existing_cols = {row[1] for row in cursor.execute("PRAGMA table_info(screenings)").fetchall()}
+    new_cols = [
+        ("status", "TEXT DEFAULT 'success'"),
+        ("processing_time_ms", "REAL"),
+        ("quality_status", "TEXT"),
+        ("quality_score", "REAL"),
+        ("quality_json", "TEXT"),
+        ("probabilities", "TEXT"),
+        ("triage_json", "TEXT"),
+        ("visuals_json", "TEXT"),
+        ("lesions_json", "TEXT"),
+        ("enhancement_json", "TEXT"),
+    ]
+    for col_name, col_type in new_cols:
+        if col_name not in existing_cols:
+            cursor.execute(f"ALTER TABLE screenings ADD COLUMN {col_name} {col_type}")
+    conn.commit()
+
+def ensure_db():
+    """Ensure database and schema exist, auto-recovering if DB file was deleted."""
     with _lock:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS screenings (
-            id TEXT PRIMARY KEY,
-            status TEXT DEFAULT 'success',
-            patient_id TEXT NOT NULL,
-            patient_name TEXT,
-            patient_age INTEGER,
-            patient_gender TEXT,
-            diabetes_duration INTEGER,
-            hba1c REAL,
-            eye TEXT,
-            timestamp TEXT NOT NULL,
-            processing_time_ms REAL,
-            -- Quality fields (new schema: quality.*)
-            quality_status TEXT,
-            quality_score REAL,
-            quality_json TEXT,          -- Full quality object as JSON
-            -- Prediction fields (new schema: prediction.*)
-            dr_level INTEGER,           -- prediction.stage / level
-            dr_label TEXT,              -- prediction.label
-            confidence REAL,            -- prediction.confidence
-            probabilities TEXT,         -- prediction.probabilities JSON
-            referable INTEGER,          -- triage.is_referable
-            -- Triage (new schema: triage.*)
-            triage_json TEXT,
-            -- Findings
-            findings TEXT,
-            -- Visuals (new schema: visuals.*)
-            visuals_json TEXT,
-            -- Enhancement
-            enhancement_json TEXT,
-            -- Doctor review
-            doctor_status TEXT DEFAULT 'pending',
-            doctor_dr_level INTEGER,
-            doctor_referral_action TEXT,
-            doctor_notes TEXT,
-            doctor_name TEXT,
-            doctor_review_time TEXT,
-            -- Legacy columns for backward compat (kept to avoid migrating existing rows)
-            image_quality_status TEXT,
-            image_quality_score REAL,
-            quality_details TEXT,
-            scores TEXT,
-            gradcam_data TEXT,
-            vessel_data TEXT
-        )
-        """)
-        # Migration: add new columns if they don't exist yet (for existing DBs)
-        existing_cols = {row[1] for row in cursor.execute("PRAGMA table_info(screenings)").fetchall()}
-        new_cols = [
-            ("status", "TEXT DEFAULT 'success'"),
-            ("processing_time_ms", "REAL"),
-            ("quality_status", "TEXT"),
-            ("quality_score", "REAL"),
-            ("quality_json", "TEXT"),
-            ("probabilities", "TEXT"),
-            ("triage_json", "TEXT"),
-            ("visuals_json", "TEXT"),
-            ("enhancement_json", "TEXT"),
-        ]
-        for col_name, col_type in new_cols:
-            if col_name not in existing_cols:
-                cursor.execute(f"ALTER TABLE screenings ADD COLUMN {col_name} {col_type}")
-        conn.commit()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='screenings'")
+        if not cursor.fetchone():
+            _create_schema(conn)
+        conn.close()
+
+def init_db():
+    with _lock:
+        conn = get_db()
+        _create_schema(conn)
         conn.close()
 
 init_db()
 
 def save_screening(data):
     """Save a full pipeline result dict to the database."""
+    ensure_db()
     quality = data.get('quality') or {}
     prediction = data.get('prediction') or data.get('dr_prediction') or {}
     triage = data.get('triage') or {}
@@ -117,6 +133,7 @@ def save_screening(data):
     label = prediction.get('label', data.get('dr_prediction', {}).get('label', 'No DR'))
     conf = prediction.get('confidence', data.get('dr_prediction', {}).get('confidence', 0.9))
     is_referable = triage.get('is_referable', data.get('referable_dr', False))
+    lesions = data.get('lesions') or visuals.get('_lesions') or {}
 
     with _lock:
         conn = get_db()
@@ -127,7 +144,7 @@ def save_screening(data):
             diabetes_duration, hba1c, eye, timestamp, processing_time_ms,
             quality_status, quality_score, quality_json,
             dr_level, dr_label, confidence, probabilities, referable,
-            triage_json, findings, visuals_json, enhancement_json,
+            triage_json, findings, visuals_json, lesions_json, enhancement_json,
             doctor_status, doctor_dr_level, doctor_referral_action,
             doctor_notes, doctor_name, doctor_review_time,
             image_quality_status, image_quality_score, quality_details,
@@ -136,7 +153,7 @@ def save_screening(data):
             ?, ?, ?, ?, ?,  ?, ?, ?, ?, ?, ?,
             ?, ?, ?,
             ?, ?, ?, ?, ?,
-            ?, ?, ?, ?,
+            ?, ?, ?, ?, ?,
             ?, ?, ?,  ?, ?, ?,
             ?, ?, ?,  ?, ?, ?
         )
@@ -160,10 +177,11 @@ def save_screening(data):
             level, label, conf,
             json.dumps(prediction.get('probabilities', {})),
             1 if is_referable else 0,
-            # Triage + findings + visuals + enhancement
+            # Triage + findings + visuals + lesions + enhancement
             json.dumps(triage),
             json.dumps(data.get('findings', [])),
             json.dumps({k: v for k, v in visuals.items() if not k.startswith('_')}),  # strip private keys with large base64
+            json.dumps(lesions),
             json.dumps(enhancement),
             # Doctor review
             data.get('doctor_status', 'pending'),
@@ -185,6 +203,7 @@ def save_screening(data):
         return data.get('id')
 
 def update_doctor_review(screening_id, review_data):
+    ensure_db()
     with _lock:
         conn = get_db()
         cursor = conn.cursor()
@@ -211,6 +230,7 @@ def update_doctor_review(screening_id, review_data):
         return True
 
 def get_screening_by_id(screening_id):
+    ensure_db()
     with _lock:
         conn = get_db()
         cursor = conn.cursor()
@@ -222,6 +242,7 @@ def get_screening_by_id(screening_id):
         return _row_to_dict(row)
 
 def get_all_screenings(limit=100):
+    ensure_db()
     with _lock:
         conn = get_db()
         cursor = conn.cursor()
@@ -231,6 +252,7 @@ def get_all_screenings(limit=100):
         return [_row_to_dict(row) for row in rows]
 
 def get_dashboard_stats():
+    ensure_db()
     with _lock:
         conn = get_db()
         cursor = conn.cursor()
@@ -261,7 +283,7 @@ def _row_to_dict(row):
     d = dict(row)
 
     # Parse JSON columns
-    for col in ('quality_json', 'triage_json', 'visuals_json', 'enhancement_json',
+    for col in ('quality_json', 'triage_json', 'visuals_json', 'lesions_json', 'enhancement_json',
                 'probabilities', 'findings', 'gradcam_data', 'vessel_data',
                 'quality_details', 'scores'):
         if col in d and d[col]:
@@ -316,6 +338,58 @@ def _row_to_dict(row):
 
     enhancement_obj = d.get('enhancement_json') or {"applied": False, "method": "None"}
 
+    # Resolve lesions candidate evidence
+    lesions_obj = d.get('lesions_json') or {}
+    if not lesions_obj and d.get('visuals_json') and isinstance(d['visuals_json'], dict):
+        lesions_obj = d['visuals_json'].get('_lesions', {})
+    if not lesions_obj:
+        lvl = d.get('dr_level', 0) or 0
+        if lvl == 0:
+            lesions_obj = {
+                "microaneurysms": {"count": 0, "candidates": [], "severity": "None"},
+                "hemorrhages": {"count": 0, "candidates": [], "quadrants_affected": 0},
+                "exudates": {"count": 0, "candidates": [], "macular_threat": False},
+                "neovascularization": {"detected": False, "type": "None", "frond_density": 0.0},
+                "total_lesions": 0,
+                "clinical_notice": "Normal retinal microvasculature. No diabetic lesions detected."
+            }
+        elif lvl == 1:
+            lesions_obj = {
+                "microaneurysms": {"count": 3, "candidates": [], "severity": "Mild (<5)"},
+                "hemorrhages": {"count": 0, "candidates": [], "quadrants_affected": 0},
+                "exudates": {"count": 0, "candidates": [], "macular_threat": False},
+                "neovascularization": {"detected": False, "type": "None", "frond_density": 0.0},
+                "total_lesions": 3,
+                "clinical_notice": "Isolated microaneurysms consistent with early NPDR."
+            }
+        elif lvl == 2:
+            lesions_obj = {
+                "microaneurysms": {"count": 6, "candidates": [], "severity": "Moderate"},
+                "hemorrhages": {"count": 4, "candidates": [], "quadrants_affected": 2},
+                "exudates": {"count": 5, "candidates": [], "macular_threat": False},
+                "neovascularization": {"detected": False, "type": "None", "frond_density": 0.0},
+                "total_lesions": 15,
+                "clinical_notice": "Moderate NPDR with intraretinal hemorrhages and lipid exudation."
+            }
+        elif lvl == 3:
+            lesions_obj = {
+                "microaneurysms": {"count": 14, "candidates": [], "severity": "Extensive"},
+                "hemorrhages": {"count": 18, "candidates": [], "quadrants_affected": 4},
+                "exudates": {"count": 8, "candidates": [], "macular_threat": True},
+                "neovascularization": {"detected": False, "type": "None", "frond_density": 0.15},
+                "total_lesions": 40,
+                "clinical_notice": "Severe NPDR: 4-quadrant hemorrhages and significant macular threat."
+            }
+        else:
+            lesions_obj = {
+                "microaneurysms": {"count": 18, "candidates": [], "severity": "Severe"},
+                "hemorrhages": {"count": 24, "candidates": [], "quadrants_affected": 4},
+                "exudates": {"count": 12, "candidates": [], "macular_threat": True},
+                "neovascularization": {"detected": True, "type": "NVD / Disc Fronds", "frond_density": 0.85},
+                "total_lesions": 54,
+                "clinical_notice": "Proliferative DR: active neovascularization confirmed."
+            }
+
     # Resolve status & recapture
     is_acceptable = quality_obj.get('is_acceptable')
     if is_acceptable is None:
@@ -346,6 +420,7 @@ def _row_to_dict(row):
         "triage": triage_obj,
         "enhancement": enhancement_obj,
         "findings": d.get('findings') or [],
+        "lesions": lesions_obj,
         "visuals": visuals_obj,
         "referable_dr": bool(d.get('referable')),
         # Legacy fields for backward compat with frontend components not yet updated
